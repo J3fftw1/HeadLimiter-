@@ -12,6 +12,10 @@ thread-pool-size: 4
 ## This makes it impossible to "extend" existing networks from just outside the border in order to steal from claims
 block-wilderness-cargo: false
 
+## When turning this config option to true, it will allow HeadLimiter to limit the amount of
+## Androids being placed down per chunk.
+androids-limit: false
+
 ## Permissions (false by default)
 ## Permission node: headlimiter.permission.<name>
 ## Example: headlimiter.permission.noob

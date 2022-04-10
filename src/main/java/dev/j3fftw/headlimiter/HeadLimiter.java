@@ -21,8 +21,7 @@ public final class HeadLimiter extends JavaPlugin implements Listener {
     @Override
     public void onEnable() {
         instance = this;
-        if (!new File(getDataFolder(), "config.yml").exists())
-            saveDefaultConfig();
+        if (!new File(getDataFolder(), "config.yml").exists()) saveDefaultConfig();
 
         Utils.loadPermissions();
 
@@ -50,6 +49,22 @@ public final class HeadLimiter extends JavaPlugin implements Listener {
             || sfItem.isItem(SlimefunItems.CARGO_MANAGER);
     }
 
+    public boolean isAndroid(SlimefunItem sfItem) {
+        return sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_FARMER)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_MINER)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_WOODCUTTER)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_BUTCHER)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_FISHERMAN)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_2)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_2_FISHERMAN)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_2_FARMER)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_2_BUTCHER)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_3)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_3_FISHERMAN)
+            || sfItem.isItem(SlimefunItems.PROGRAMMABLE_ANDROID_3_BUTCHER);
+    }
+
     @EventHandler(priority = EventPriority.MONITOR)
     public void onPlace(BlockPlaceEvent e) {
         final Player player = e.getPlayer();
@@ -60,11 +75,19 @@ public final class HeadLimiter extends JavaPlugin implements Listener {
             && !Utils.canBypass(player)
         ) {
             final SlimefunItem sfItem = SlimefunItem.getByItem(e.getItemInHand());
-            if (sfItem != null
-                && isCargo(sfItem)
-            ) {
+            if (sfItem == null) {
+                return;
+            }
+
+            if (isCargo(sfItem)) {
                 final int maxAmount = Utils.getMaxHeads(player);
-                Utils.count(block.getChunk(),
+                Utils.countCargo(block.getChunk(),
+                    result -> Utils.onCheck(player, block, maxAmount, result.getTotal(), sfItem));
+            }
+
+            if (getConfig().getBoolean("androids-limit", false) && isAndroid(sfItem)) {
+                final int maxAmount = Utils.getMaxHeads(player);
+                Utils.countAndroids(block.getChunk(),
                     result -> Utils.onCheck(player, block, maxAmount, result.getTotal(), sfItem));
             }
         }

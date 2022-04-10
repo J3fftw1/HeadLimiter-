@@ -17,7 +17,7 @@ public class CountCommand implements CommandExecutor {
         if (args.length == 1 && sender instanceof Player) {
             Player player = (Player) sender;
 
-            Utils.count(player.getChunk(), result -> {
+            Utils.countCargo(player.getChunk(), result -> {
                 StringBuilder message = new StringBuilder();
 
                 if (Utils.canBypass(player)) {

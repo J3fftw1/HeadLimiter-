@@ -22,7 +22,6 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.ThreadFactory;
 import java.util.function.Consumer;
 
 public final class Utils {
@@ -69,7 +68,9 @@ public final class Utils {
         return HeadLimiter.getInstance().getConfig().getInt("amount", 25);
     }
 
-    public static void count(@Nonnull Chunk chunk, @Nonnull Consumer<CountResult> consumer) {
+    //TODO combine countCargo and countAndroids
+
+    public static void countCargo(@Nonnull Chunk chunk, @Nonnull Consumer<CountResult> consumer) {
         final BlockState[] tileEntities = chunk.getTileEntities();
 
         SERVICE.submit(() -> {
@@ -88,6 +89,24 @@ public final class Utils {
         });
     }
 
+    public static void countAndroids(@Nonnull Chunk chunk, @Nonnull Consumer<CountResult> consumer) {
+        final BlockState[] tileEntities = chunk.getTileEntities();
+
+        SERVICE.submit(() -> {
+            final Map<String, Integer> counts = new HashMap<>();
+            int totalAndroids = 0;
+            for (BlockState state : tileEntities) {
+                final SlimefunItem slimefunItem = BlockStorage.check(state.getLocation());
+                if (slimefunItem != null && HeadLimiter.getInstance().isAndroid(slimefunItem)) {
+                    counts.merge(slimefunItem.getId(), 1, Integer::sum);
+                    totalAndroids++;
+                }
+            }
+
+            consumer.accept(new CountResult(totalAndroids, counts));
+        });
+    }
+
     @ParametersAreNonnullByDefault
     public static void onCheck(Player player, Block block, int maxAmount, int count, SlimefunItem sfItem) {
         boolean isPlacingRestricted = isPlacingRestricted(block);
@@ -102,10 +121,12 @@ public final class Utils {
             });
 
             BlockStorage.clearBlockInfo(block.getLocation());
-            if (isPlacingRestricted) {
+            if (isPlacingRestricted && HeadLimiter.getInstance().isCargo(sfItem)) {
                 player.sendMessage(ChatColor.RED + "You can't place Cargo nodes in claimed areas!");
-            } else {
+            } else if (HeadLimiter.getInstance().isCargo(sfItem)){
                 player.sendMessage(ChatColor.RED + "You hit the limit of Cargo nodes in this chunk");
+            } else {
+                player.sendMessage(ChatColor.RED + "You hit the limit of Androids in this chunk");
             }
         }
     }
