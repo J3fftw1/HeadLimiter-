@@ -8,6 +8,7 @@ import java.util.Set;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
+import dev.j3fftw.headlimiter.Utils;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.World;
@@ -85,7 +86,7 @@ public final class BlockLimiter {
 
     public int getPlayerLimitByItem(@Nonnull Player player, @Nonnull String itemId) {
         Group group = getGroupByItem(itemId);
-        if (group == null) {
+        if (group == null || Utils.canBypass(player)) {
             return -1;
         } else {
             return group.getPermissibleAmount(player);

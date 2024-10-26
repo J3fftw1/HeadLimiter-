@@ -1,25 +1,15 @@
 package dev.j3fftw.headlimiter;
 
-import java.io.File;
-
+import co.aikar.commands.PaperCommandManager;
+import dev.j3fftw.headlimiter.blocklimiter.BlockLimiter;
 import dev.j3fftw.headlimiter.blocklimiter.Group;
 import io.github.thebusybiscuit.slimefun4.libraries.dough.updater.BlobBuildUpdater;
-import org.bukkit.Material;
-import org.bukkit.block.Block;
 import org.bukkit.configuration.ConfigurationSection;
-import org.bukkit.entity.Player;
-import org.bukkit.event.EventHandler;
-import org.bukkit.event.EventPriority;
-import org.bukkit.event.Listener;
-import org.bukkit.event.block.BlockPlaceEvent;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import io.github.thebusybiscuit.slimefun4.api.items.SlimefunItem;
-import io.github.thebusybiscuit.slimefun4.implementation.SlimefunItems;
+import java.io.File;
 
-import dev.j3fftw.headlimiter.blocklimiter.BlockLimiter;
-
-public final class HeadLimiter extends JavaPlugin implements Listener {
+public final class HeadLimiter extends JavaPlugin {
 
     private static HeadLimiter instance;
     private BlockLimiter blockLimiter;
@@ -32,55 +22,20 @@ public final class HeadLimiter extends JavaPlugin implements Listener {
             saveDefaultConfig();
         }
 
-        Utils.loadPermissions();
-
-        getServer().getPluginManager().registerEvents(this, this);
-
-        getCommand("headlimiter").setExecutor(new CountCommand());
-
         new MetricsService(this).start();
 
-        if (getConfig().getBoolean("auto-update", true) && getDescription().getVersion().startsWith("DEV - ")) {
+        if (getConfig().getBoolean("auto-update", true) && getDescription().getVersion().startsWith("Dev")) {
             new BlobBuildUpdater(this, getFile(), "HeadLimiter", "Dev").start();
         }
 
         this.blockLimiter = new BlockLimiter(this);
         loadConfig();
+        registerCommands();
     }
 
     @Override
     public void onDisable() {
         instance = null;
-    }
-
-    public boolean isCargo(SlimefunItem sfItem) {
-        return sfItem.isItem(SlimefunItems.CARGO_INPUT_NODE)
-            || sfItem.isItem(SlimefunItems.CARGO_OUTPUT_NODE)
-            || sfItem.isItem(SlimefunItems.CARGO_OUTPUT_NODE_2)
-            || sfItem.isItem(SlimefunItems.CARGO_CONNECTOR_NODE)
-            || sfItem.isItem(SlimefunItems.CARGO_MANAGER);
-    }
-
-    @EventHandler(priority = EventPriority.MONITOR)
-    public void onPlace(BlockPlaceEvent e) {
-        final Player player = e.getPlayer();
-        final Block block = e.getBlock();
-
-        if (!e.isCancelled()
-            && (block.getType() == Material.PLAYER_HEAD || block.getType() == Material.PLAYER_WALL_HEAD)
-            && !Utils.canBypass(player)
-        ) {
-            final SlimefunItem sfItem = SlimefunItem.getByItem(e.getItemInHand());
-            if (sfItem != null
-                && isCargo(sfItem)
-            ) {
-                final int maxAmount = Utils.getMaxHeads(player);
-                Utils.count(
-                    block.getChunk(),
-                    result -> Utils.onCheck(player, block, maxAmount, result.getTotal(), sfItem)
-                );
-            }
-        }
     }
 
     public BlockLimiter getBlockLimiter() {
@@ -91,7 +46,7 @@ public final class HeadLimiter extends JavaPlugin implements Listener {
         return instance;
     }
 
-    public void loadConfig() {
+    private void loadConfig() {
         ConfigurationSection configurationSection = instance.getConfig().getConfigurationSection("block-limits");
         if (configurationSection == null) {
             throw new IllegalStateException("No configuration for groups is available.");
@@ -99,5 +54,16 @@ public final class HeadLimiter extends JavaPlugin implements Listener {
         for (String key : configurationSection.getKeys(false)) {
             BlockLimiter.getInstance().getGroups().add(new Group(configurationSection.getConfigurationSection(key)));
         }
+    }
+
+    private void registerCommands() {
+        PaperCommandManager manager = new PaperCommandManager(this);
+
+        manager.enableUnstableAPI("help");
+        manager.enableUnstableAPI("brigadier");
+
+        manager.getCommandCompletions().registerCompletion("groups", c -> BlockLimiter.getInstance().getGroups().stream().map(Group::getGroupName).toList());
+
+        manager.registerCommand(new MainCommand());
     }
 }
