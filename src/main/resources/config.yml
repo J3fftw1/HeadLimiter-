@@ -1,26 +1,5 @@
-## Block Limits
-## You can limit all Slimefun Blocks including all addons.
-## You will have to make a group per item or item set.
-##
-## Down here you have an example for Cargo.
-## cargo: is the group name
-## items-amount: is the default amount the group is limited to
-## items: will have a list of items you want to block. These are all Slimefun Items IDs (Addons included)
-## permission-amount: this will have a list of permissions. This is completely optional and doesn't have to be there,
-## If you do not want permissions you can just remove it or not add it to the group.
-##  cargo:
-##    items-amount: 25
-##    items:
-##      - CARGO_NODE_INPUT
-##      - CARGO_NODE_OUTPUT
-##      - CARGO_NODE_OUTPUT_ADVANCED
-##      - CARGO_NODE
-##      - CARGO_MANAGER
-##    permission-amount:
-##      example_1: 50
-##      example_2: 100
-##      example_3: 150
-
+# Check the documentation for more information about the configuration file.
+# Link: https://github.com/Slimefun-Addon-Community/HeadLimiter#readme
 block-limits:
   cargo:
     items-amount: 25
